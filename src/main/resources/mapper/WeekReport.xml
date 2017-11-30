@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mimidai.dao.WeekReportDao">
+
+    <select id="queryx" resultType="map">
+
+
+    </select>
+
+    <select id="queryUserDevice" resultType="Integer">
+    select count(DISTINCT imei) from user_device where user_id= #{userId}
+</select>
+
+    <select id="query11" resultType="map">
+
+        select l.user_id as userId,l.amount,l.term,
+        case when l2.xhd_state ='1' then '是' else '否' end as 'xhd',
+        (select count(id) from  loan where loan_state='2' and id&lt;l.id and user_id =l.user_id) as 'loanCount',
+        case when r.state='0' then '未还' else '已还' end as 'repay',
+        r.overdue
+        from loan l inner join repay r on r.loan_id=l.id
+        inner join loan_apply l2 on l.loan_apply_id=l2.id
+        where l.loan_time>'2017-09-01' and l.loan_time&lt;'2017-10-01'
+        and l.loan_state='2'
+    </select>
+
+    <select id="queryRemark" resultType="String">
+        select remark_label  as remarkLabel from repay_remark where linkeder='1' and loan_id=#{loanId} order by id desc limit 1
+    </select>
+
+    <select id="queryValue" resultType="String">
+        select c.value from code c where c.category='remarkLabel' and c.key = #{remarkLabel}
+    </select>
+    <select id="query2" resultType="com.mimidai.entity.WeekReport">
+
+
+        select l.user_id as userId,ui.name,r.overdue,
+        l.amount,
+        l.apply_time as 'applyTime',
+        l.loan_time as 'loanTime'
+        from loan l
+        inner join user_info ui on ui.user_id = l.user_id
+        inner join repay r on l.id=r.loan_id
+        where l.loan_time>'2017-08-01'  and l.user_id = #{userId} ORDER  by l.id desc limit 1
+    </select>
+    <select id="queryLoanThreeTime" resultType="String">
+        select r.user_id  as userId from repay r where r.user_id in
+        (select l.user_id from loan l inner join loan_apply la on l.loan_apply_id=la.id where l.loan_state = '2' and
+        l.overdue=0 and l.loan_time>'2017-08-01' and la.state='11' and la.xhd_state='1' and l.term=1 )
+        GROUP BY r.user_id having count(r.id)>=3 and max(r.overdue)&lt;=0
+    </select>
+    <select id="queryFirstLoanDs" resultType="String">
+      select check_user_id from loan_apply where user_id=#{userId} and state ='11' ORDER  by id limit 1
+    </select>
+
+    <select id="query1" resultType="com.mimidai.entity.WeekReport">
+
+         select ui.name,
+         ui.age,
+         CONCAT(left(ui.phone,3),"********",right(ui.phone
+         ,4)) as phone2,
+        ui.phone,
+         CONCAT(left(ui.idcard,6),"********",right(ui.idcard
+         ,4)),
+         l2.apply_time as applyTime,
+      l.user_id as userId,
+      l.loan_time as loanTime,
+      l.amount,
+			(select loan_time from loan where user_id = l.user_id and l.state not in ('0','1','7') ORDER BY loan_time desc limit 1) as 'lastLoanTime',
+			(select rule_final_decision from user_bs_result where user_id = l.user_id  ORDER BY id desc limit 1) as 'baiRong',
+			(CASE WHEN (select user_id from loan where user_id = l.user_id and state not in ('0','1','7') GROUP BY user_id having count(user_id) >1 ) is not null THEN '循环贷' ELSE '首贷' END) as 'isXHD',
+      (CASE when l2.check_user_id not in ('1','148') then '是' else '否' end) as 'isDS',
+      (CASE WHEN l2.rule_description = '首贷规则:300017,200/' then '首贷规则'
+      WHEN l2.rule_description = '首贷规则:300019,200/' then '支付消费'
+      when l2.rule_description = '首贷规则:' then '转人工'  end) as 'passRule',
+      (CASE WHEN IFNULL(r.repay_date,CURDATE())>r.play_date then '逾期' else '未逾期' end) as 'isOverdue',
+			(CASE WHEN r.repay_date is not null then '已还' else '未还' end) as 'isRepay',
+      uj.province,
+      ts.idcard_province as idcardProvince
+      from loan l
+      inner join repay r
+      on l.id = r.loan_id
+      inner JOIN  user_job uj
+      on l.user_id = uj.user_id
+      INNER JOIN loan_apply l2
+      on l2.id = l.loan_apply_id
+      inner JOIN user_info ui
+      on l2.user_id = ui.user_id
+      inner join tp_sauron ts
+      on ts.user_id = l.user_id
+      where  l.state not in ('0','1','7')
+      and l2.xhd_state = 0
+      and  l.loan_time>='2017-07-01'
+      and l.loan_time &lt;'2017-08-01'
+      GROUP BY l.user_id
+
+
+
+
+    </select>
+
+    <!--<select id="query2" resultType="com.mimidai.entity.WeekReport">-->
+
+    <!--select l.user_id as userId, CASE WHEN r.overdue>0 then '是' ELSE '否' end as 'overdue',-->
+    <!--CASE WHEN r.state='0' then '否' ELSE '是' end as 'repay',-->
+    <!--r.overdue as 'count',l.loan_time as 'loanTime',-->
+    <!--l2.apply_time as 'applyTime'-->
+    <!--from loan l inner join loan_apply l2 on l.loan_apply_id = l2.id-->
+    <!--inner join repay r on l.id = r.loan_id-->
+    <!--where l2.xhd_state='1'-->
+    <!--and l.loan_time>'2017-07-01'-->
+    <!--and l.loan_time&lt;'2017-09-01'-->
+    <!--and l.loan_state not in('0','1','7')-->
+
+
+    <!--</select>-->
+    <select id="query3" resultType="com.mimidai.entity.WeekReport">
+
+      SELECT
+            l.user_id AS userId,
+            CASE
+        WHEN l2.xhd_state = '1' THEN
+            '循环贷'
+        ELSE
+            '首贷'
+        END AS 'xhd',
+         (
+            SELECT
+                imei
+            FROM
+                user_device
+            WHERE
+                user_id = l.user_id
+            AND DATE_FORMAT(update_time, '%Y-%m-%d') >= DATE_FORMAT(l2.apply_time, '%Y-%m-%d') limit 1
+
+        ) as imei
+        FROM
+            loan l
+        INNER JOIN loan_apply l2 ON l.loan_apply_id = l2.id
+        WHERE
+            l.loan_time > '2017-09-04'
+        AND l.loan_time &lt; '2017-09-09'
+        AND l.loan_state NOT IN ('0', '1', '7')
+
+
+    </select>
+    <select id="query5" resultType="com.mimidai.entity.WeekReport">
+
+
+        select l.user_id as userId,ui.name,r.overdue,ui.phone,age,
+        case when r.state='0' then '未还' else '已还' end as 'repay',
+        loan_cnt AS loanCnt,
+        invest_cnt AS investCnt,
+        bet_cnt AS betCnt,
+        bank_cnt AS bankCnt,
+        credit_cnt AS creditCnt,
+        welfare_cnt AS welfareCnt,
+        life_cnt AS lifeCnt,
+        sensitive_cnt AS sensitiveCnt,
+        game_cnt AS gameCnt,
+        location_cnt AS locationCnt,
+        total,
+        (select count(id) from user_device where user_id = l.user_id)  as 'device',
+        case when ui.marriage=1 then '未婚' else '已婚' end as 'marrige',
+        ui.children
+
+        from loan l
+        inner join loan_apply l2 on l.loan_apply_id=l2.id
+        inner join user_info ui on ui.user_id = l.user_id
+        inner join repay r on l.id=r.loan_id
+        inner join user_installed_app_category app on app.user_id = l.user_id and DATE_FORMAT(l2.apply_time,'%Y-%m-%d %h-%i')=DATE_FORMAT(app.create_time,'%Y-%m-%d %h-%i')
+
+        where l.loan_time>'2017-09-01' and l.loan_time&lt;'2017-10-01'  and l2.xhd_state='0' and l.loan_state='2'
+
+
+
+    </select>
+
+    <select id="queryBlack" resultType="com.mimidai.entity.WeekReport">
+        select
+        ui.name,
+        (CASE WHEN IFNULL(r.repay_date,CURDATE())>r.play_date then '逾期' else '未逾期' end) as 'isOverdue',
+        r.overdue,
+        (CASE WHEN (select user_id from loan where user_id = l.user_id and state not in ('0','1','7') GROUP BY user_id having count(user_id) >1 ) is not null THEN '循环贷' ELSE '首贷' END) as 'isXHD',
+        l2.apply_time as applyTime,
+        (CASE WHEN ui.xshd_black= '1' then 1
+            else 0 end) as hdBlack
+        from loan l
+        inner join repay r
+        on l.id = r.loan_id
+        INNER JOIN loan_apply l2
+        on l2.id = l.loan_apply_id
+        inner JOIN user_info ui
+        on l2.user_id = ui.user_id
+        where  l.state not in ('0','1','7')
+        and l2.xhd_state = 0
+        and  l.loan_time>='2017-08-01'
+        and l.loan_time &lt;'2017-08-10 23:59:59'
+
+    </select>
+
+
+    <select id="queryZhima" resultType="com.mimidai.entity.WeekReport" parameterType="Long">
+
+   select
+		ivs_score as 'zhimaScore'
+
+	from tp_zhima_ivs
+	where user_id = #{userId}
+	ORDER  by id desc limit 1
+  </select>
+    <select id="queryContacts" resultType="String" parameterType="Long">
+	    select
+			distinct uc.phone
+		from user_contacts uc
+		left join user u on (uc.user_id=u.id)
+		where uc.user_id= #{userId} and uc.check_state != 'rm'
+		order by edit_id,create_time limit 2
+  </select>
+
+
+    <select id="findNewTPByUserId" resultType="com.mimidai.entity.WeekReport" parameterType="Long">
+        select
+           idcard_province idcardProvince,
+           gender,
+           phone_province phoneProvince,
+           age
+        from tp_sauron
+        where user_id = #{userId}
+        ORDER BY id DESC limit 1
+    </select>
+
+    <select id="findBRByUserId" resultType="String">
+  	select
+	  CASE WHEN ubr.rule_final_decision='Review' then '有嫌疑'
+       when ubr.rule_final_decision='Accept' then '可信任'
+        when  ubr.rule_final_decision='Reject' then '不可信任'  END as ruleFinalDecision
+		from user_bs_result ubr
+		where ubr.user_id= #{userId}
+		order by id desc
+		limit 1
+    </select>
+
+    <select id="findAppInstall" resultType="Map">
+         SELECT
+        t.`user_id` AS userId,
+        t.`imei` AS imei,
+        t.`imsi` AS imsi,
+        t.`loan_cnt` AS loanCnt,
+        t.`invest_cnt` AS investCnt,
+        t.`bet_cnt` AS betCnt,
+        t.`bank_cnt` AS bankCnt,
+        t.`credit_cnt` AS creditCnt,
+        t.`welfare_cnt` AS welfareCnt,
+        t.`life_cnt` AS lifeCnt,
+        t.`sensitive_cnt` AS sensitiveCnt,
+        t.`game_cnt` AS gameCnt,
+        t.`location_cnt` AS locationCnt,
+        t.`total`,
+        t.`create_time` AS createTime
+        FROM `user_installed_app_category` t
+        WHERE t.`user_id` =#{userId} and t.create_time>=#{applyTime} order by t.id desc limit 1
+    </select>
+
+
+    <select id="findUserIp" parameterType="Long" resultType="String">
+        select ip from user_operate_log where user_id = #{userId} ORDER BY create_time desc limit  1
+    </select>
+
+    <select id="findSensitive" resultType="com.mimidai.entity.WeekReport">
+        SELECT phone_no as phoneNo,type FROM `sensitivity_phone`;
+    </select>
+
+    <select id="findBankInfo" resultType="String">
+        select
+          ub.province
+        from
+        user_bank ub
+        left join bank bank on(bank.id = ub.bank_id)
+        where
+        ub.user_id = #{userId}
+        and
+        ub.type = '0'
+        order by
+        ub.id desc
+        limit 1
+
+    </select>
+
+    <select id="findUserJob" resultType="String">
+        select
+        uj.province
+        from
+        user_job uj
+        where
+        uj.user_id = #{userId}
+        order by
+        uj.id desc
+        limit 1
+
+    </select>
+    <select id="findJobName" resultType="String">
+        select value from code where category='WorkJob' and sort=(
+        select
+        uj.job
+        from
+        user_job uj
+        where
+        uj.user_id = #{userId}
+        order by
+        uj.id desc
+        limit 1)
+
+    </select>
+
+    <select id="findLastLoanInfo" resultType="com.mimidai.entity.WeekReport">
+        select (CASE when r.repay_date>r.play_date and r.overdue>0 then '1'
+        WHEN r.repay_date is null and r.overdue>0 then '0'
+        when IFNULL(r.repay_date,CURDATE())&lt;r.play_date then 'null' end) as 'lastOverdue',
+        (CASE WHEN r.state='1' then '是'
+        else '否' end) as 'lastRepay',
+        r.overdue as lastAmount
+        from repay r where r.id =(
+        select min(id) from repay where loan_id = (
+        SELECT MAX(l.id) from loan l where l.user_id =#{userId} GROUP BY l.user_id))
+
+    </select>
+    <!--<select id="findOverdueTime" resultType="Integer">-->
+    <!--select count(DISTINCT r.loan_id) from repay r-->
+    <!--inner join loan l2 on l2.id = r.loan_id where l2.user_id = #{userId}-->
+    <!--and r.overdue>0-->
+    <!--</select>-->
+    <select id="findInTimeRepay" resultType="com.mimidai.entity.WeekReport">
+        select
+        sum(CASE WHEN DATEDIFF(r.play_date,r.repay_date)>25 and DATEDIFF(r.play_date,r.repay_date)&lt;=30 then 1 ELSE 0 end) as 'day1',
+        sum(CASE WHEN DATEDIFF(r.play_date,r.repay_date)>20 and DATEDIFF(r.play_date,r.repay_date)&lt;=25 then 1 ELSE 0 end) as 'day2'
+        from  loan l
+        inner join repay r  on l.id=r.loan_id
+        and l.user_id =#{userId}
+    </select>
+
+
+    <select id="findLoanTime" resultType="Integer">
+        select count(id) from loan where user_id=#{userId} and loan_state not in ('0','1','7') and loan_time&lt;'2017-09-01'
+    </select>
+    <select id="findOverdueTime" resultType="Integer" parameterType="map">
+        select count(*) from  repay r where r.id in(
+            select min(id) from repay  where user_id = #{userId}  and play_date&lt;DATE_FORMAT(DATE_ADD(#{loanTime},INTERVAL 29 DAY),'%Y-%m-%d') GROUP BY loan_id)
+             and r.overdue>0
+    </select>
+    <select id="findMaxOverdue" resultType="Integer" parameterType="map">
+        select max(overdue) from repay where user_id = #{userId} and play_date&lt;DATE_FORMAT(DATE_ADD(#{loanTime},INTERVAL 29 DAY),'%Y-%m-%d')
+    </select>
+    <select id="findSumOverdue" resultType="Integer" parameterType="map">
+        select sum(overdue) from repay where user_id = #{userId} and play_date&lt;DATE_FORMAT(DATE_ADD(#{loanTime},INTERVAL 29 DAY),'%Y-%m-%d')
+    </select>
+
+
+    <select id="findBanInfo" resultType="com.mimidai.entity.WeekReport">
+            select ub.province as bankProvince,b.name as bankDeposit from user_bank ub
+                inner join bank b on b.id=ub.bank_id
+                where ub.user_id = #{userId} and ub.type = '0' order by ub.id desc limit 1
+    </select>
+
+    <select id="queryTpSauron" resultType="com.mimidai.entity.TpSquron">
+        select
+        phone_province as phoneProvince,
+
+        sn_score  as snScore,
+        idcard_validate as idcardValidate,
+        idcard_province as idcardProvince,
+        idcard_city as idcardCity,
+        idcard_region as idcardRegion,
+        last_appear_idcard as lastIdcard,
+        last_appear_phone as lastPhone,
+        record_idcard_days as idcardDays,
+        record_phone_days as phoneDays,
+        used_idcards_cnt as idcardCnt,
+        used_phones_cnt as phoneCnt,
+        sn_order1_contacts_cnt as directContacts,
+        sn_order1_blacklist_contacts_cnt as directBad,
+        sn_order2_blacklist_contacts_cnt as directGood,
+        sn_order2_blacklist_routers_cnt as indirectBad
+        ,sn_order2_blacklist_routers_pct   as blackRatio
+
+        ,online_installment_cnt   as online
+        ,offline_cash_loan_cnt  as offlineCash
+        ,credit_card_repayment_cnt  as creditCash
+        ,payday_loan_cnt  as payCash
+        ,online_cash_loan_cnt  as onlineCash
+        ,search_cnt_recent_7_days  as search7
+        ,search_cnt_recent_14_days  as search14
+        ,search_cnt_recent_30_days  as search30
+        ,search_cnt_recent_60_days  as search60
+        ,search_cnt_recent_90_days  as search90
+        ,search_cnt_recent_180_days  as search180
+        ,org_cnt_recent_7_days  as recent7
+        ,org_cnt_recent_14_days  as recent14
+        ,org_cnt_recent_30_days  as recent30
+        ,org_cnt_recent_60_days  as recent60
+        ,org_cnt_recent_90_days  as recent90
+        ,org_cnt_recent_180_days  as recent180
+        from  tp_sauron
+        where  user_id = #{userId} and
+        DATE_FORMAT(update_time,'%Y-%m')=DATE_FORMAT(#{applyTime},'%Y-%m')
+        ORDER BY id desc limit 1
+    </select>
+
+
+    <select id="findRemark" resultType="String">
+        select c.value from code  c where category = 'remarkLabel' and c.key = #{key}
+    </select>
+
+    <select id="findBsBehavior" resultType="com.mimidai.entity.UserBsPayBehavior">
+        select
+            user_id as userId,
+            DAY_1_var1 as day1Var1,
+            MCC_3_var1 as mcc3Var1,
+            FLAG_6_var3 as flag6Var3,
+            FLAG_6_var8 as flag6Var8,
+            total_amt as totalAmt,
+            MON_3_var1 as mon3Var1,
+            FLAG_6_var1 as flag6Var1,
+            MON_6_var1 as mon6Var1,
+            RFM_6_var6 as rfm6Var6
+        from user_bs_pay_behavior
+        where user_id= #{userId}
+        order by id desc
+        limit 1
+    </select>
+
+    <select id="queryGoodOrBadByUserId" resultType="Long" parameterType="Long">
+        select max(l.overdue) from loan l where l.user_id = #{userId}
+    </select>
+
+
+    <select id="query" resultType="Long">
+        select user_id as userId from
+        loan GROUP BY user_id having count(id)>1 and sum(overdue)&lt;=1
+    </select>
+
+
+    <select id="queryAny" resultType="map">
+        select user_id as userId,id  from repay where overdue&lt;=1 and user_id=#{userId}
+    </select>
+
+    <select id="queryAdvance" resultType="map">
+        select user_id as userId,overdue  from repay where user_id =#{userId}  and id&lt;#{id} order by id desc limit 1
+    </select>
+
+    <select id="queryMonth" resultType="Long">
+        select user_id from repay where repay_date>DATE_ADD(CURRENT_DATE ,INTERVAL -30 DAY ) GROUP  by user_id having count(id)&lt;2
+    </select>
+    <select id="queryLoanApply" resultType="Long">
+        select user_id from loan_apply where apply_time>DATE_ADD(CURRENT_DATE ,INTERVAL -30 DAY ) and state='5' GROUP  by user_id HAVING count(*)>1
+    </select>
+</mapper>

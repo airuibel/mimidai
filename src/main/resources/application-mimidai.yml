@@ -1,0 +1,33 @@
+spring: 
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://rdsbvyvdc249m449gjd6.mysql.rds.aliyuncs.com:3306/mimidai?characterEncoding=utf-8
+    username: mimidai
+    password: Mimidai123
+    maxActive: 30
+    maxIdle: 10 
+    minIdle: 5
+    initialSize: 0
+    validation-query: select 1
+	test-on-borrow: true
+  redis: 
+    host: 10.46.179.196
+    port: 6379
+    password: Mimidai123
+    
+#--------------------------------
+slave:
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://rr-2ze54w8n57xn43793.mysql.rds.aliyuncs.com:3306/mimidai?characterEncoding=utf-8
+    username: mimidai
+    password: Mimidai123
+#--------------------------------
+
+logging: 
+   file: /var/logs/mimidai-cms.log
+   level: info
+#--------------------------------
+switch:
+   isSendPush: true
+   isSendMessage: true

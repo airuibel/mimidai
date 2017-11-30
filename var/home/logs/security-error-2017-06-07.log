@@ -1,0 +1,6 @@
+18:49:42.304 [main] INFO  com.mimidai.UserLocation2Hbase - Starting UserLocation2Hbase on DESKTOP-89TII1V with PID 12676 (D:\workspace\demohbase_zfx\demohbase\target\classes started by zhangyu in D:\workspace\demohbase_zfx\demohbase)
+18:49:42.312 [main] DEBUG com.mimidai.UserLocation2Hbase - Running with Spring Boot v1.5.3.RELEASE, Spring v4.3.8.RELEASE
+18:49:42.313 [main] INFO  com.mimidai.UserLocation2Hbase - No active profile set, falling back to default profiles: default
+18:51:12.229 [main] INFO  com.mimidai.UserLocation2Hbase - Starting UserLocation2Hbase on DESKTOP-89TII1V with PID 4008 (D:\workspace\demohbase_zfx\demohbase\target\classes started by zhangyu in D:\workspace\demohbase_zfx\demohbase)
+18:51:12.235 [main] DEBUG com.mimidai.UserLocation2Hbase - Running with Spring Boot v1.5.3.RELEASE, Spring v4.3.8.RELEASE
+18:51:12.235 [main] INFO  com.mimidai.UserLocation2Hbase - No active profile set, falling back to default profiles: default

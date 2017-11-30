@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mimidai.dao.XhdDao">
+
+    <select id="query" resultType="com.mimidai.entity.XhdUseInfo" >
+        (SELECT ui.user_id as userId,
+        ui.name as name,
+        '逾期' as 'isOverdue',
+        r.overdue as overdue,
+        DATE_FORMAT(u.regist_time,'%Y-%m-%d') as registTime,
+        (select DATE_FORMAT(apply_time,'%Y-%m-%d') as applyTime from loan_apply where user_id = l.user_id and state in(10,11) ORDER BY id limit 1) as firstAppTime,
+        (select DATE_FORMAT(apply_time,'%Y-%m-%d') as applyTime from loan_apply where user_id = l.user_id and apply_time>(select  apply_time from loan_apply where user_id = l.user_id and state in(10,11) ORDER BY id limit 1)  ORDER BY id limit 1) as secondAppTime,
+        (select DATE_FORMAT(apply_time,'%Y-%m-%d') as applyTime from loan_apply where  user_id = l.user_id and apply_time>(select  apply_time from loan_apply where user_id = l.user_id and state in(10,11) ORDER BY id limit 1) and  state in(10,11)  ORDER BY id limit 1) as secondSucLoanTime,
+        (select amount from loan where user_id = l.user_id and apply_time>(select  apply_time from loan_apply where user_id = l.user_id and state in(10,11) ORDER BY id limit 1) ORDER BY id limit 1) as secondAmount,
+        (select amount from loan_apply where user_id = l.user_id and state in(10,11)  ORDER BY id limit 2,1) as thirdSucAmount,
+        (select count(id) from loan_apply where user_id = ll.user_id  and DATE_FORMAT(apply_time,'%Y-%m')='2017-04'	) as oneApplyTime,
+        (select count(id) from loan_apply where user_id = ll.user_id  and apply_time>='2017-02-01' and apply_time&lt;='2017-04-30'	) as  threeApplyTime,
+        (select count(id) from loan_apply where user_id = ll.user_id  and DATE_FORMAT(apply_time,'%Y-%m')='2017-04' and check_user_id = 148 and state = 5) as  oneRejectDrools,
+        (select count(id) from loan_apply where  user_id = ll.user_id  and DATE_FORMAT(apply_time,'%Y-%m')='2017-04'  and state=5 and check_user_id<![CDATA[ <> ]]>148) as  oneRejectManager,
+        (select count(id) from loan_apply where  user_id = ll.user_id  and apply_time>='2017-02-01' and apply_time&lt;='2017-04-30'  and check_user_id = 148 and state = 5 ) as  threeRejectDrools,
+        (select count(id) from loan_apply where  user_id = ll.user_id  and apply_time>='2017-02-01' and apply_time&lt;='2017-04-30'  and state=1 ) as  threeRejectUser,
+        (select r.play_date from repay r inner join loan l2 on r.loan_id = l2.id  where l2.user_id  = l.user_id order by r.id  limit 1) as firstPlayDate,
+        (select r.play_date from repay r inner join loan l2 on r.loan_id = l2.id  where l2.user_id  = l.user_id  order by r.id limit 1,1) as secondPlayDate,
+        (select r.play_date from repay r inner join loan l2 on r.loan_id = l2.id  where l2.user_id  = l.user_id  order by r.id limit 2,1) as thirdPlayDate,
+        (select r.repay_date from repay r inner join loan l2 on r.loan_id = l2.id  where l2.user_id  = l.user_id order by r.id  limit 1) as firstRepayDate,
+        (select r.repay_date from repay r inner join loan l2 on r.loan_id = l2.id  where l2.user_id  = l.user_id  order by r.id limit 1,1) as secondRepayDate,
+        (select r.repay_date from repay r inner join loan l2 on r.loan_id = l2.id  where l2.user_id  = l.user_id  order by r.id limit 2,1) as thirdRepayDate,
+        (SELECT idcard_province   from tp_sauron where user_id  = l.user_id ORDER BY  id DESC  limit 1) as idardProvince,
+        (SELECT phone_province   from tp_sauron where user_id  = l.user_id ORDER BY  id DESC  limit 1) as phoneProvince,
+        u.phone as phone
+
+        from repay r
+        inner join loan l
+        on l.id = r.loan_id
+        inner JOIN
+        loan_apply ll
+        on l.loan_apply_id = ll.id
+        inner join user_info ui
+        on ui.user_id = l.user_id
+        inner join user u
+        on u.id = ui.user_id
+        where l.loan_time >='2017-06-01' and l.loan_time &lt;='2017-06-30'
+        and ll.xhd_state = 1
+        and (r.state = '0' AND (r.repay_date IS NULL AND r.overdue >0))
+        limit 10000)
+        union
+        (SELECT ui.user_id as userId,
+        ui.name as name,
+        '未逾期' as 'isOverdue',
+        r.overdue as overdue,
+        DATE_FORMAT(u.regist_time,'%Y-%m-%d') as registTime,
+        (select DATE_FORMAT(apply_time,'%Y-%m-%d') as applyTime from loan_apply where user_id = l.user_id and state in(10,11) ORDER BY id limit 1) as firstAppTime,
+        (select DATE_FORMAT(apply_time,'%Y-%m-%d') as applyTime from loan_apply where user_id = l.user_id and apply_time>(select  apply_time from loan_apply where user_id = l.user_id and state in(10,11) ORDER BY id limit 1)  ORDER BY id limit 1) as secondAppTime,
+        (select DATE_FORMAT(apply_time,'%Y-%m-%d') as applyTime from loan_apply where  user_id = l.user_id and apply_time>(select  apply_time from loan_apply where user_id = l.user_id and state in(10,11) ORDER BY id limit 1) and  state in(10,11)  ORDER BY id limit 1) as secondSucLoanTime,
+        (select amount from loan where user_id = l.user_id and apply_time>(select  apply_time from loan_apply where user_id = l.user_id and state in(10,11) ORDER BY id limit 1) ORDER BY id limit 1) as secondAmount,
+        (select amount from loan_apply where user_id = l.user_id and state in(10,11)  ORDER BY id limit 2,1) as thirdSucAmount,
+        (select count(id) from loan_apply where user_id = ll.user_id  and DATE_FORMAT(apply_time,'%Y-%m')='2017-04'	) as oneApplyTime,
+        (select count(id) from loan_apply where user_id = ll.user_id  and apply_time>='2017-02-01' and apply_time&lt;='2017-04-30'	) as  threeApplyTime,
+        (select count(id) from loan_apply where user_id = ll.user_id  and DATE_FORMAT(apply_time,'%Y-%m')='2017-04' and check_user_id = 148 and state = 5) as  oneRejectDrools,
+        (select count(id) from loan_apply where  user_id = ll.user_id  and DATE_FORMAT(apply_time,'%Y-%m')='2017-04'  and state=5 and check_user_id<![CDATA[ <> ]]>148) as  oneRejectManager,
+        (select count(id) from loan_apply where  user_id = ll.user_id  and apply_time>='2017-02-01' and apply_time&lt;='2017-04-30'  and check_user_id = 148 and state = 5 ) as  threeRejectDrools,
+        (select count(id) from loan_apply where  user_id = ll.user_id  and apply_time>='2017-02-01' and apply_time&lt;='2017-04-30'  and state=1 ) as  threeRejectUser,
+        (select r.play_date from repay r inner join loan l2 on r.loan_id = l2.id  where l2.user_id  = l.user_id order by r.id  limit 1) as firstPlayDate,
+        (select r.play_date from repay r inner join loan l2 on r.loan_id = l2.id  where l2.user_id  = l.user_id  order by r.id limit 1,1) as secondPlayDate,
+        (select r.play_date from repay r inner join loan l2 on r.loan_id = l2.id  where l2.user_id  = l.user_id  order by r.id limit 2,1) as thirdPlayDate,
+        (select r.repay_date from repay r inner join loan l2 on r.loan_id = l2.id  where l2.user_id  = l.user_id order by r.id  limit 1) as firstRepayDate,
+        (select r.repay_date from repay r inner join loan l2 on r.loan_id = l2.id  where l2.user_id  = l.user_id  order by r.id limit 1,1) as secondRepayDate,
+        (select r.repay_date from repay r inner join loan l2 on r.loan_id = l2.id  where l2.user_id  = l.user_id  order by r.id limit 2,1) as thirdRepayDate,
+        (SELECT idcard_province   from tp_sauron where user_id  = l.user_id ORDER BY  id DESC  limit 1) as idardProvince,
+        (SELECT phone_province   from tp_sauron where user_id  = l.user_id ORDER BY  id DESC  limit 1) as phoneProvince,
+        u.phone as phone
+
+        from repay r
+        inner join loan l
+        on l.id = r.loan_id
+        inner JOIN
+        loan_apply ll
+        on l.loan_apply_id = ll.id
+        inner join user_info ui
+        on ui.user_id = l.user_id
+        inner JOIN user u
+        on u.id = ui.user_id
+        where l.loan_time >='2017-06-01' and l.loan_time &gt;='2017-06-30'
+        and ll.xhd_state = 1
+        limit 20000)
+
+    </select>
+
+
+    <select id="queryUser" resultType="com.mimidai.entity.UserInfo">
+
+    (SELECT ui.user_id as userId,
+    l.id as loanId,
+    '循环贷' as loanType,
+   (CASE WHEN ((r.repay_date IS NULL AND r.overdue>0) OR r.repay_date>r.play_date)
+		THEN '逾期' ELSE '未逾期' END) AS 'isOverdue',
+	(CASE WHEN (r.state = '0')
+		  THEN '未还' ELSE '已还' END) AS 'isRepay'
+   from repay r
+    inner join loan l
+    on l.id = r.loan_id
+    inner JOIN
+    loan_apply ll
+    on l.loan_apply_id = ll.id
+    inner join user_info ui
+    on ui.user_id = l.user_id
+    inner join user u
+    on u.id = ui.user_id
+    where l.loan_time >='2017-06-01' and l.loan_time &lt;='2017-06-30'
+    and ll.xhd_state = 1
+    and l.state not in(0,1,7)
+    limit 10000)
+    union all
+    (SELECT ui.user_id as userId,
+    l.id as loanId,
+    '首贷' as loanType,
+     (CASE WHEN ((r.repay_date IS NULL AND r.overdue>0) OR r.repay_date>r.play_date)
+		THEN '逾期' ELSE '未逾期' END) AS 'isOverdue',
+	(CASE WHEN (r.state = '0')
+		  THEN '未还' ELSE '已还' END) AS 'isRepay'
+    from repay r
+    inner join loan l
+    on l.id = r.loan_id
+    inner JOIN
+    loan_apply ll
+    on l.loan_apply_id = ll.id
+    inner join user_info ui
+    on ui.user_id = l.user_id
+    inner JOIN user u
+    on u.id = ui.user_id
+    where l.loan_time >='2017-06-01' and l.loan_time &lt;='2017-06-30'
+    and ll.xhd_state = 0
+    and l.state not in(0,1,7)
+    limit 10000)
+    </select>
+    <select id="findSensitive" resultType="Map">
+        SELECT phone_no as phone,type FROM `sensitivity_phone`;
+    </select>
+</mapper>

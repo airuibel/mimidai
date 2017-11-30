@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mimidai.dao.ExcludePhoneDao">
+	<sql id="selectSql">
+		e.id as `id`,
+		e.phone as `phone`,
+		e.name as `name`,
+		e.creat_id as 'creatId',
+		e.creat_time as 'creatTime',
+		e.remark as 'remark',
+		e.update_time as 'updateTime',
+		e.state as 'state',
+		m.id as 'manager.id',
+		m.name as 'manager.name'
+	</sql>
+	<sql id="whereSql">
+		<where>
+			<trim prefixOverrides="and">
+				<if test="state!=null and state!='' "> and e.state = #{state}</if>
+				<if test="beginTime!=null"> and e.creat_time >= #{beginTime}</if>
+				<if test="endTime!=null"> and e.creat_time <![CDATA[<=]]> #{endTime}</if>
+				<if test="keyword != null and keyword != '' ">
+					and (e.phone like CONCAT(#{keyword},'%') or e.name like CONCAT(#{keyword},'%') or e.id = #{keyword} )
+				</if>
+			</trim>
+		</where>
+	</sql>
+
+	<!-- 根据条件查询 -->
+	<select id="findAllByCondition" parameterType="Map" resultType="com.mimidai.entity.ExcludePhone">
+		select
+		<include refid="selectSql" />
+		from exclude_phone e
+		left join manager m on (m.id = e.creat_id)
+		<include refid="whereSql" />
+		order by state desc, e.id desc
+	</select>
+	<!-- 根据条件查询 -->
+	<select id="findAll" resultType="String">
+		select
+		e.phone
+		from exclude_phone e
+
+	</select>
+
+	<select id="findById" resultType="com.mimidai.entity.ExcludePhone">
+		select
+		<include refid="selectSql" />
+		from exclude_phone e
+		left join manager m on (e.creat_id = m.id)
+		where e.id = #{id}
+	</select>
+
+	<!-- 更新 -->
+	<update id="update" parameterType="com.mimidai.entity.ExcludePhone">
+		update exclude_phone
+		<set>
+			<if test="phone != null and phone != ''">phone = #{phone},</if>
+			<if test="name != null and name != ''">name = #{name},</if>
+			<if test="creatId!=null">creat_id = #{creatId},</if>
+			<if test="updateTime!=null">update_time = #{updateTime},</if>
+			<if test="state!=null">state = #{state},</if>
+			<if test="remark!=null">remark = #{remark}</if>
+		</set>
+		where id = #{id}
+	</update>
+
+	<!-- 删除 -->
+	<delete id="delete">
+		update exclude_phone set state = '0',update_time = #{updateTime},creat_id = #{managerId} where id=#{id}
+	</delete>
+
+	<!-- 插入 -->
+	<insert id="save">
+		insert into exclude_phone (phone,name,creat_id,creat_time,remark,update_time,state)
+		values (
+		#{phone},#{name},#{creatId},#{creatTime},#{remark},#{updateTime},#{state})
+	</insert>
+
+</mapper> 

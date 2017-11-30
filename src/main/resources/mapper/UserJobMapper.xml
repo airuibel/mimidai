@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mimidai.dao.UserJobDao">
+
+	<sql id="userJobColumns">
+		uj.id as id,
+		uj.user_id as userId,
+		uj.job as job,
+		uj.company as company,
+		uj.province as province,
+		uj.city as city,
+		uj.area as area,
+		uj.address as address,
+		uj.phone as phone,
+		uj.check_state as checkState,
+		uj.check_user_id as checkUserId,
+		uj.check_time as checkTime,
+		uj.remark as remark,
+		uj.create_time as `createTime`,
+		uj.profession as profession ,
+		uj.match_status as `matchStatus`,
+		uj.child_profession as `childProfession`
+	</sql>
+	<sql id="userColumns">
+		u.id as "user.id",
+		u.phone as "user.phone",
+		u.name as "user.name",
+		u.password as "user.password",
+		u.state as "user.state"
+	</sql>
+	<sql id="codeColumns">
+		c.value as 'jobName'
+	</sql>
+	<!-- 根据userId获取用户最新工作信息 -->
+	<select id="getByUserId" resultType="com.mimidai.entity.UserJob">
+		select
+		<include refid="userJobColumns"></include>
+		from 
+			user_job uj
+		where
+			uj.user_id = #{userId}
+		order by uj.id desc
+		limit 1 
+	</select>
+	
+	<select id="findByUserId" resultType="com.mimidai.entity.UserJob">
+		select
+		<include refid="userJobColumns"></include>
+		from 
+			user_job uj
+		where
+			uj.user_id = #{userId} 
+		order by uj.id desc
+	</select>
+	
+	<select id="findById" resultType="com.mimidai.entity.UserJob">
+		select
+		<include refid="userJobColumns"></include>
+		from 
+			user_job uj
+		where 
+			uj.id = #{id}
+	</select>
+	
+	<!-- 根据ID获取用户 工作信息 -->
+	<select id="getById" parameterType="long" resultType="com.mimidai.entity.UserJob">
+		select
+			<include refid="userJobColumns"></include>,
+			<include refid="userColumns"></include>
+		from user_job uj,user u
+		where uj.user_id=u.id and uj.id=#{id}
+	</select>
+
+	<!-- 查询所有用户工作信息  -->
+	<select id="getAll" resultType="com.mimidai.entity.UserJob">
+		select
+			<include refid="userJobColumns"></include>,
+			<include refid="userColumns"></include>
+		from user_job uj,user u
+		where uj.user_id=u.id
+	</select>
+	
+	<!-- 根据userId，phone 查询在相同公司的用户  相同电话的公司为同一公司-->
+	<select id="findAllSameJobByUserIdAndPhone" resultType="java.util.HashMap">
+		select 
+			u.id as 'userJob.id',
+			u.user_id as 'userId',
+			u.company as 'jobName',
+			u.phone as 'phone',
+			user.info_state as 'userInfoState',
+			user.audit_state as 'userAuditState',
+			ui.name as 'name',
+			ui.idcard as 'idcard',
+			count(la.id) as 'refuseTimes',
+			count(l.id) as 'loanTimes',
+			sum(case r.state WHEN '1' then 0 else 1 end) as 'remainTimes',
+			sum(l.amount) as 'amount',
+			sum(l.remain_amount) as 'remainAmount',
+			sum(r.repay_total) as 'overTotal',
+			sum(r.overdue) as 'overdue',
+			count(r.id) as 'overTimes'
+		from 
+			user_job u 
+			left join user_info ui on(ui.user_id = u.user_id)
+			left join loan_apply la on ( u.user_id=la.user_id  and la.state = '4')
+			left join loan l on(l.user_id = ui.user_id)
+			left join user user on(user.id = ui.user_id)
+			left join repay r on(r.loan_id = l.id and r.overdue > 0)
+		where 
+			u.id in (select max(uj.id) from user_job uj where uj.user_id != #{userId} and uj.phone=#{phone} group by uj.user_id)
+			group by u.user_id;
+	</select>
+	
+	<select id="findAllSameJobByIds" resultType="java.util.HashMap">
+		select 
+			u.id as 'userJob.id',
+			u.user_id as 'userId',
+			u.company as 'jobName',
+			u.phone as 'phone',
+			user.info_state as 'userInfoState',
+			user.audit_state as 'userAuditState',
+			ui.name as 'name',
+			ui.idcard as 'idcard',
+			count(la.id) as 'refuseTimes',
+			count(l.id) as 'loanTimes',
+			sum(case r.state WHEN '1' then 0 else 1 end) as 'remainTimes',
+			sum(l.amount) as 'amount',
+			sum(l.remain_amount) as 'remainAmount',
+			sum(r.repay_total) as 'overTotal',
+			sum(r.overdue) as 'overdue',
+			count(r.id) as 'overTimes'
+		from 
+			user_job u 
+			left join user_info ui on(ui.user_id = u.user_id)
+			left join loan_apply la on ( u.user_id=la.user_id  and la.state = '4')
+			left join loan l on(l.user_id = ui.user_id)
+			left join user user on(user.id = ui.user_id)
+			left join repay r on(r.loan_id = l.id and r.overdue > 0)
+		where 
+			u.id in (${userIds}) and user.audit_state in ('3','4')
+		group by u.user_id;
+	</select>
+	
+	<select id="findOtherJobIds" resultType="com.mimidai.entity.UserJob">
+		select max(uj.id) as 'id' from user_job uj where uj.user_id != #{userId} and uj.phone=#{phone} group by uj.user_id
+	</select>
+
+	<!-- 保存用户工作信息  -->
+	<insert id="insert" parameterType="com.mimidai.entity.UserJob" useGeneratedKeys="true" keyProperty="id">
+		insert into user_job (
+			id,
+			user_id,
+			job,
+			company,
+			province,
+			city,
+			area,
+			address,
+			phone,
+			check_state,
+			check_user_id,
+			check_time,
+			remark,
+			create_time
+			<if test="profession != null">
+				,profession
+			</if>
+			<if test="childProfession != null">
+				,child_profession
+			</if>
+		) values (
+			#{id},
+			#{userId},
+			#{job},
+			#{company},
+			#{province},
+			#{city},
+			#{area},
+			#{address},
+			#{phone},
+			#{checkState},
+			#{checkUserId},
+			#{checkTime},
+			#{remark},
+			#{createTime}
+			<if test="profession != null">
+				,#{profession}
+			</if>
+			<if test="childProfession != null">
+				,#{childProfession}
+			</if>
+		)
+	</insert>
+
+	<!-- 更新用户工作信息  -->
+	<update id="update" parameterType="com.mimidai.entity.UserJob">
+		update user_job
+		<set>
+			<if test="userId != null">user_id=#{userId},</if>
+			<if test="job != null">job=#{job},</if>
+			<if test="company != null">company=#{company},</if>
+			<if test="province != null and province != ''">province=#{province},</if>
+			<if test="city != null and city != ''">city=#{city},</if>
+			<if test="area != null and area != ''">area=#{area},</if>
+			<if test="address != null">address=#{address},</if>
+			<if test="checkState != null">check_state=#{checkState},</if>
+			<if test="checkUserId != null">check_user_id=#{checkUserId},</if>
+			<if test="checkTime != null">check_time=#{checkTime},</if>
+			<if test="createTime != null">create_time=#{createTime},</if>
+			<if test="remark != null">remark=#{remark},</if>
+			<if test="profession != null">profession=#{profession},</if>
+			<if test="childProfession != null">child_profession=#{childProfession},</if>
+			<if test="matchStatus != null">match_status=#{matchStatus}</if>
+		</set>
+		where id = #{id}
+	</update>
+
+	<!-- 删除用户工作信息  -->
+	<delete id="delete" parameterType="long">
+		delete from user_job where id=#{id}
+	</delete>
+</mapper> 

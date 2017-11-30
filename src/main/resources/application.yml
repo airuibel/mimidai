@@ -1,0 +1,114 @@
+server:
+  port: 8080
+  tomcat.uri-encoding: UTF-8
+  session-timeout: 3600
+#---------------------------------
+
+spring:
+  profiles.active: develop
+  main.show-banner: false
+  mvc:
+       view:
+            prefix: /WEB-INF/pages/
+            suffix: .jsp
+  http:
+       encoding:
+            charset: UTF-8
+            enabled: true
+            force: true
+#---------------------------------
+
+shiro:
+  realm: com.mimidai.cms.config.ShiroDbRealm
+  loginUrl: /login
+  successUrl: /
+  unauthorizedUrl: /system/nopermission
+  filterChainDefinitions:
+      "/WEB-INF/**": anon
+      "/api/file/*": anon
+      "/api/zx/*": anon
+      "/api/lianlian/**": anon
+      "/login": authc
+      "/logout": logout
+      "/static/**": anon
+      "/test/**": anon
+      "/basic/code": anon
+      "/checkCode": anon
+      "/apply/check/partial/api/bairong": anon
+      "/finance/stat/date/makeHtml": anon
+      "/finance/payback/shanqbCallBack": anon
+      "/user/reqAuditCitizen": perms[apply:identityAudit]
+      "/apply/distribute/list": perms[apply:auditDistribution]
+      "/apply/check/list": perms[apply:applyAudit]
+      "/apply/rating/list": perms[apply:changeRate]
+      "/apply/confirm/list": perms[apply:auditCheck]
+      "/apply/passed/list": perms[apply:myLoan]
+      "/loan/check/list": perms[loan:loanAudit]
+      "/loan/queue/list": perms[loan:loanQueue]
+      "/loan/waiting/list": perms[loan:loanWaiting]
+      "/loan/success/list": perms[loan:paymentComplete]
+      "/loan/fail/list": perms[loan:paymentFail]
+      "/loan/manual/list": perms[loan:artificialLoan]
+      "/loan/changecard/list": perms[loan:userCardReplace]
+      "/loan/total/list": perms[loan:totalRecord]
+      "/collection/distribute/list": perms[collection:distribute]
+      "/collection/receivable/list": perms[collection:receivable]
+      "/collection/overdue/list": perms[collection:overdue]
+      "/collection/extension/list": perms[collection:extension]
+      "/collection/modify/list": perms[collection:changeFeeApply]
+      "/collection/total/list": perms[collection:collectionList]
+      "/user/info/list": perms[borrower:management]
+      "/user/address/list": perms[borrower:addressManagement]
+      "/user/blacklist/list": perms[borrower:black]
+      "/modal/customerservice": perms[borrower:Customerservice]
+      "/market/channel/list": perms[promotion:dayChannel]
+      "/market/data/list": perms[promotion:dayData]
+      "/market/conversion/list": perms[promotion:conversionRate]
+      "/market/stats/list": perms[promotion:statistics]
+      "/market/info/list": perms[promotion:channelMaintenance]
+      "/sys/manager/list": perms[accountNum:userAccountNum]
+      "/sys/role/list": perms[accountNum:roleMamage]
+      "/sys/login/list": perms[accountNum:logShow]
+      "/sys/recommended/list": perms[accountNum:recommended]
+      "/sys/field/list": perms[accountNum:fieldMamage]
+      "/sys/exclude/list": perms[accountNum:exclude]
+      "/sys/sensitiveWord/list": perms[accountNum:sensitiveWord]
+      "/cms/carousel/list": perms[cmsContent:carousel]
+      "/cms/article/list": perms[cmsContent:article]
+      "/cms/category/list": perms[cmsContent:category]
+      "/cms/app/list": perms[cmsContent:app]
+      "/modal/app/upload*": perms[moadlApp:upload]
+      "/modal/select/distribute/managers": perms[collection:reDistribute]
+      "/finance/loan/total/query": perms[finance:loan:query]
+      "/finance/payback/query": perms[finance:payback:query]
+      "/finance/offline/query": perms[finance:offline:query]
+      "/finance/loan/check/query": perms[finance:loan:check:query]
+      "/finance/loan/payout/query": perms[finance:loan:payout:query]
+      "/finance/loan/payout/stat": perms[finance:loan:payout:stat]
+      "/finance/loan/payback/stat": perms[finance:loan:payback:query]
+      "/finance/collection/repay/total": perms[finance:collection:total]
+      "/finance/collection/collect/total": perms[finance:collection:collect:total]
+      "/finance/collection/repay/stat": perms[finance:collection:repay:stat]
+      "/finance/collection/collector/count": perms[finance:collection:collector:count]
+      "/finance/stat/finance/dates": perms[finance:stat:finance:dates]
+      "/report/repay/daily": perms[report:repay:daily]
+      "/report/data/week": perms[report:data:week]
+      "/report/data/loan": perms[report:data:loan]
+      "/report/data/m1m2/collection": perms[report:data:m1m2Collection]
+      "/report/data/real/repay": perms[report:data:realRepay]
+      "/report/data/xhd/xhdAudite": perms[report:data:xhdPass]
+      "/report/data/plan/repay": perms[report:data:planRepay]
+      "/loanApply/drools/statistic": perms[loanApply:drools:statistic]
+      "/report/data/phone/check": perms[report:data:phoneCheckCount]
+      "/report/data/acPlan/loan": perms[report:data:acPlanDateLoan]
+      "/report/data/planDate/repay": perms[report:data:planDateRepay]
+      "/report/data/firstApply": perms[report:data:firstApply]
+      "/report/data/m1Overdue": perms[report:data:m1Overude]
+      "/**": authc
+
+#---------------------------------
+
+mybatis:
+  config: classpath:/mybatis-config.xml
+  mapperLocations: classpath:mapper/**/*.xml
+  typeAliasesPackage: com.mimidai.common.entity

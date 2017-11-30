@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mimidai.dao.UserInfoDao">
+
+    <select id="queryUserInfo" resultType="com.mimidai.entity.UserIdcard">
+          SELECT
+            usf.user_id as userId,
+            ifnull(usf.`age`, -9999) as 'age',
+            ifnull(usf.`result_score`,-9999) as 'ResultScore',
+            ifnull(usf.`contact_count`, -9999) as 'ContactCount',
+            ifnull(usf.`op_call_times`, -9999) as 'OpCallTimes',
+            ifnull(usf.`collection_call_count`, -9999) as 'CollectionCallCount',
+            ifnull(usf.`cs_set_num`, -9999) as 'CsSetNum',
+            ifnull(usf.`share_dev_ind`, -9999) as 'ShareDevInd',
+            ifnull(usf.`cs1_contacts_num`, -9999) as 'Cs1ContactsNum',
+            ifnull(usf.`sensitive_count`, -9999) as 'SensitiveCount',
+            ifnull(usf.`op_record_match_times`, -9999) as 'OpRecordMatchTimes',
+            ifnull(usf.`xshd_black`, -9999) as 'XshdBlack',
+            ifnull(usf.`contacts_top10_count`, -9999) as 'ContactsTop10Count',
+            r.overdue as 'overdue',
+            (case when repay_date is not null then '已还'
+            when repay_date is null then '未还' end) as repay
+            from loan_apply la
+            INNER join user_score_field usf
+            on la.user_id = usf.user_id
+            INNER join loan l
+            on l.loan_apply_id = la.id
+            inner join repay r
+            on l.id = r.loan_id
+            where la.task_count > 0
+            and la.apply_time &gt;='2017-06-01'
+            and la.apply_time &lt;='2017-06-15'
+            and la.check_user_id=148
+            and la.state in (10, 11)
+            and la.`rule_description` LIKE '%300017%'
+            AND la.`rule_description` NOT LIKE '首贷规则:%400/%'
+            AND la.`rule_description` NOT LIKE '首贷规则:%403/%'
+    </select>
+
+    <select id="queryTp" resultType="com.mimidai.entity.TPTsm">
+        select  apply_total_count  as applyTotalCount,
+            query_count as queryCount,
+            etotal_count as etotalCount,
+            total_count as totalCount
+         from tp_msp_diff_report where result_id = #{resultId}
+    </select>
+    <select id="queryTpBlack" resultType="Integer">
+        select  count(DISTINCT id) from tp_msp_black_datas where result_id in (select  id from tp_msp_result where apply_user_id =  #{userId})
+    </select>
+
+
+    <!--<select id="queryTpTspTitle" resultType="Integer" >-->
+    <!--select  count(id) from tp_msp_title where result_id in (select  id from tp_msp_result where apply_user_id =  #{userId})-->
+    <!--</select>-->
+
+    <select id="queryTpTspApplying" resultType="com.mimidai.entity.TpTsp">
+        select  applying_count as applyingCount,apply_reject_count as applyRejectCount from tp_msp_title where result_id =   #{resultId}
+    </select>
+
+
+    <select id="queryTpSauron" resultType="com.mimidai.entity.TpSquron" parameterType="Long">
+      select
+
+        sn_score  as snScore
+        ,sn_order2_blacklist_routers_pct   as blackRatio
+
+        ,online_installment_cnt   as online
+        ,offline_cash_loan_cnt  as offlineCash
+        ,search_cnt_recent_7_days  as search7
+        ,search_cnt_recent_14_days  as search14
+        ,search_cnt_recent_30_days  as search30
+        ,search_cnt_recent_60_days  as search60
+        ,search_cnt_recent_90_days  as search90
+        ,search_cnt_recent_180_days  as search180
+        ,org_cnt_recent_7_days  as recent7
+        ,org_cnt_recent_14_days  as recent14
+        ,org_cnt_recent_30_days  as recent30
+        ,org_cnt_recent_60_days  as recent60
+        ,org_cnt_recent_90_days  as recent90
+        ,org_cnt_recent_180_days  as recent180
+        from  tp_sauron
+            where  user_id = #{userId}
+            ORDER BY id desc limit 1
+    </select>
+
+    <select id="queryResultId" resultType="Integer" parameterType="Long">
+        select  max(id)  from tp_msp_result where apply_user_id =  #{userId}
+    </select>
+
+    <select id="queryUserId" resultType="com.mimidai.entity.UserIdcard">
+        select   id  as userId, phone from user limit 10
+    </select>
+    <select id="queryMobile" resultType="com.mimidai.entity.UserIdcard">
+        select   phone,corp  from mobile
+    </select>
+
+    <select id="findUserInfo" resultType="com.mimidai.entity.TpSquron">
+        SELECT
+        DISTINCT l.user_id userId,
+        (CASE WHEN IFNULL(r.repay_date,CURDATE())>r.play_date then '逾期' else '未逾期' end) as 'isOverdue',
+        (CASE WHEN r.repay_date is not null then '已还' else '未还' end) as 'repayed',
+        r.overdue,
+        zmv.ivs_score ivsscore,
+        zmv.mobile_level as mobileLevel,
+        zmv.bank_card_level as bankLevel,
+
+        ubpb.day_1_var1 day1var1,
+        ubpb.mon_3_var1 mon3var1,
+        ubpb.mcc_3_var1 mcc3var1,
+        ubpb.rfm_6_var6 rfm6var6,
+        ubpb.mon_6_var1 mon6var1,
+        ubpb.flag_6_var3 flag6var3,
+        la.apply_time applyTime
+        FROM loan l
+        INNER JOIN loan_apply la ON l.loan_apply_id = la.id
+        LEFT JOIN repay r ON l.id = r.loan_id
+        LEFT JOIN tp_zhima_ivs zmv ON zmv.user_id = l.user_id
+        LEFT JOIN user_bs_pay_behavior ubpb ON ubpb.user_id = l.user_id
+        WHERE l.loan_time >= '2017-07-25'
+        and l.loan_time &lt;'2017-08-25'
+        AND la.xhd_state = '0'
+    </select>
+
+    <select id="findAllByPhones" resultType="java.util.HashMap">
+        select
+        ui.user_id as 'userId'
+        from
+        user_info ui
+        left join `user` u on(u.id = ui.user_id)
+        where
+        ui.phone in (${phones}) and u.audit_state in ('3','4')
+    </select>
+
+
+    <!-- 根据userIds查询用户信息-->
+    <select id="findAllNearByUserIds" resultType="java.util.HashMap">
+        select
+        count(DISTINCT u.id)
+        from user u
+        where
+            u.id in(${userIds})
+
+        and u.audit_state in ('3','4')
+
+    </select>
+
+</mapper>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mimidai.dao.MspResultDao">
+
+
+    <select id="findNewByUserIdAndType" resultType="com.mimidai.entity.MspQuery">
+        select
+			id as `id`,
+			tp_msp_query.member as `member`,
+			tp_msp_query.sign as `sign`,
+			tp_msp_query.customer_name as `customerName`,
+			tp_msp_query.paper_number as `paperNumber`,
+			tp_msp_query.loan_id as `loanId`,
+			tp_msp_query.biz_type as `bizType`,
+			tp_msp_query.loan_type as `loanType`,
+			tp_msp_query.apply_date as `applyDate`,
+			tp_msp_query.apply_credit_city as `applyCreditCity`,
+			tp_msp_query.apply_loan_money as `applyLoanMoney`,
+			tp_msp_query.apply_loan_time_limit as `applyLoanTimeLimit`,
+			tp_msp_query.apply_assure_type as `applyAssureType`,
+			tp_msp_query.check_result_time as `checkResultTime`,
+			tp_msp_query.check_result as `checkResult`,
+			tp_msp_query.loan_money as `loanMoney`,
+			tp_msp_query.loan_start_date as `loanStartDate`,
+			tp_msp_query.loan_end_date as `loanEndDate`,
+			tp_msp_query.loan_credit_city as `loanCreditCity`,
+			tp_msp_query.loan_periods as `loanPeriods`,
+			tp_msp_query.loan_assure_type as `loanAssureType`,
+			tp_msp_query.nbs_money as `nbsMoney`,
+			tp_msp_query.state as `state`,
+			tp_msp_query.nb_money as `nbMoney`,
+			tp_msp_query.overdue_start_date as `overdueStartDate`,
+			tp_msp_query.overdue_days as `overdueDays`,
+			tp_msp_query.overdue_reason as `overdueReason`,
+			tp_msp_query.return_code as `returnCode`,
+			tp_msp_query.reason as `reason`,
+			tp_msp_query.`type` as `type`,
+			tp_msp_query.loan_apply_id as `loanApplyId`,
+			tp_msp_query.loan_user_id as `loanUserId`,
+			tp_msp_query.create_time as `createTime`
+		from tp_msp_query
+        where tp_msp_query.loan_user_id = #{userId} and `type` = #{type}
+        ORDER  BY id DESC
+        limit 1
+    </select>
+
+
+    <sql id="selectAll">
+        select
+        tp_msp_result.id as `id`,
+        tp_msp_result.query_id as `queryId`,
+        tp_msp_result.apply_user_id as `applyUserId`,
+        tp_msp_result.apply_id as `applyId`,
+
+        abnormal_credit_details_num as `abnormalCreditDetailsNum`,
+        apply_details_num as `applyDetailsNum`,
+        black_datas_num as `blackDatasNum`,
+        contact_report_num as `contactReportNum`,
+        diffReport_num as `diffReportNum`,
+        normal_credit_details_mum as `normalCreditDetailsNum`,
+        query_details_num as `queryDetailsNum`,
+        title_num as `titleNum`,
+
+        tp_msp_result.create_time as `createTime`
+        from tp_msp_result
+    </sql>
+
+    <select id="findByQueryId" resultType="com.mimidai.entity.MspResult">
+        <include refid="selectAll"/>
+        where tp_msp_result.query_id = #{queryId}
+    </select>
+
+    <select id="findAll" resultType="com.mimidai.entity.MspTitle">
+    select
+    tp_msp_title.id as `id`,
+    tp_msp_title.result_id as `resultId`,
+    tp_msp_title.report_time as `reportTime`,
+    tp_msp_title.query_number as `queryNumber`,
+    tp_msp_title.customer_name as `customerName`,
+    tp_msp_title.paper_number as `paperNumber`,
+    tp_msp_title.wjq_count as `wjqCount`,
+    tp_msp_title.jq_count as `jqCount`,
+    tp_msp_title.total_count as `totalCount`,
+    tp_msp_title.ewjq_count as `ewjqCount`,
+    tp_msp_title.ejq_count as `ejqCount`,
+    tp_msp_title.etotal_count as `etotalCount`,
+    tp_msp_title.applying_count as `applyingCount`,
+    tp_msp_title.apply_passed_count as `applyPassedCount`,
+    tp_msp_title.apply_reject_count as `applyRejectCount`,
+    tp_msp_title.apply_total_count as `applyTotalCount`,
+    tp_msp_title.query_count as `queryCount`
+    from tp_msp_title
+    where  tp_msp_title.result_id = #{resultId}
+</select>
+
+    <select id="findDetails" resultType="com.mimidai.entity.MspApplyDetails">
+        select
+        tp_msp_apply_details.id as `id`,
+        tp_msp_apply_details.result_id as `resultId`,
+        tp_msp_apply_details.apply_date as `applyDate`,
+        tp_msp_apply_details.member_type as `memberType`,
+        tp_msp_apply_details.credit_address as `creditAddress`,
+        tp_msp_apply_details.loan_type as `loanType`,
+        tp_msp_apply_details.loan_money as `loanMoney`,
+        tp_msp_apply_details.apply_result as `applyResult`,
+        tp_msp_apply_details.remark as `remark`
+        from tp_msp_apply_details
+         where
+         tp_msp_apply_details.result_id = #{resultId}
+          and tp_msp_apply_details.remark is null limit 3
+    </select>
+
+
+
+</mapper>
